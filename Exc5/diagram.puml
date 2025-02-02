@@ -1,0 +1,27 @@
+@startuml
+
+title Sequence Diagram. Диаграмма последовательности для чтения списка заказов и обновления статуса заказа с кешированием
+actor Operator
+participant "MES API" as API
+participant "Redis Cache" as CACHE
+participant "MES Database" as DB
+
+== Read Order List ==
+Operator -> API : Request Order List
+API -> CACHE : Check Cache for Orders
+CACHE -> API : Return Cached Orders (if available)
+alt Cache Miss
+    API -> DB : Query Database for Orders
+    DB -> API : Return Order List
+    API -> CACHE : Cache Order List
+end
+API -> Operator : Return Order List
+
+== Update Order Status ==
+Operator -> API : Update Order Status
+API -> DB : Write Updated Status to DB
+DB -> API : Confirm Status Update
+API -> CACHE : Invalidate Cache Entry
+API -> Operator : Confirm Order Status Update
+
+@enduml
